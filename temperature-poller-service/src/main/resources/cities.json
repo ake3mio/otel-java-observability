@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Tokyo",
+    "country": "Japan",
+    "latitude": 35.6895,
+    "longitude": 139.6917
+  },
+  {
+    "name": "Cape Town",
+    "country": "South Africa",
+    "latitude": -33.9249,
+    "longitude": 18.4241
+  },
+  {
+    "name": "São Paulo",
+    "country": "Brazil",
+    "latitude": -23.5505,
+    "longitude": -46.6333
+  },
+  {
+    "name": "Istanbul",
+    "country": "Turkey",
+    "latitude": 41.0082,
+    "longitude": 28.9784
+  },
+  {
+    "name": "Sydney",
+    "country": "Australia",
+    "latitude": -33.8688,
+    "longitude": 151.2093
+  }
+]

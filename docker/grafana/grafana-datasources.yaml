@@ -1,0 +1,97 @@
+apiVersion: 1
+
+datasources:
+  - uid: influxdb
+    orgId: 1
+    name: influxdb
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    user: ""
+    database: "foo"
+    basicAuth: true
+    basicAuthUser: admin
+    secureJsonData:
+      basicAuthPassword: admin123
+    jsonData:
+      dbName: foo
+      version: InfluxQL
+    readOnly: false
+  - name: Loki
+    type: loki
+    uid: loki
+    access: proxy
+    orgId: 1
+    url: http://loki:3100
+    basicAuth: false
+    isDefault: false
+    version: 1
+    editable: true
+    jsonData:
+      derivedFields:
+        - datasourceUid: tempo
+          matcherRegex: "[trace_id|traceID|traceid]=(\\w+)"
+          name: TraceID
+          url: '$${__value.raw}'
+          urlDisplayLabel: 'View Trace'
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    orgId: 1
+    url: http://prometheus:9090
+    basicAuth: false
+    isDefault: true
+    version: 1
+    editable: true
+    jsonData:
+      exemplarTraceIdDestinations:
+        - datasourceUid: tempo
+          name: trace_id
+          urlDisplayLabel: "Go to traces"
+        - datasourceUid: tempo
+          name: traceID
+          urlDisplayLabel: "Go to traces"
+  - uid: pyroscope
+    type: grafana-pyroscope-datasource
+    name: Pyroscope
+    url: http://pyroscope:4040
+    jsonData:
+      keepCookies: [ pyroscope_git_session ]
+  - name: Tempo
+    type: tempo
+    access: proxy
+    orgId: 1
+    url: http://tempo:3200
+    version: 1
+    editable: true
+    apiVersion: 1
+    uid: tempo
+    jsonData:
+      httpMethod: "GET"
+      serviceMap:
+        datasourceUid: "prometheus"
+      nodeGraph:
+        enabled: true
+      streamingEnabled:
+        search: true
+      tracesToLogsV2:
+        customQuery: true
+        datasourceUid: "loki"
+        query: '{service_name=~".+"} |~ `$${__span.traceId}`'
+        spanEndTimeShift: "1h"
+        spanStartTimeShift: "-1h"
+      tracesToMetrics:
+        datasourceUid: "prometheus"
+        queries:
+          - name: "View metrics"
+            query: "{$$__tags} "
+        spanEndTimeShift: "1h"
+        spanStartTimeShift: "-1h"
+        tags: [ ]
+      tracesToProfiles:
+        customQuery: false
+        datasourceUid: "pyroscope"
+        profileTypeId: "process_cpu:cpu:nanoseconds:cpu:nanoseconds"
+        tags:
+          - key: "service.name"
+            value: "service_name"

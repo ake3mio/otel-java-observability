@@ -1,0 +1,40 @@
+<configuration>
+    <property name="PATTERN" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [traceID=%mdc{traceId:-none} spanID=%mdc{spanId:-none}] - %msg%n" />
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>http://localhost:9999/loki/api/v1/push</url>
+        </http>
+        <batchTimeoutMs>2000</batchTimeoutMs>
+        <format>
+            <staticLabels>true</staticLabels>
+            <label>
+                <pattern>
+                    service_name = temperature-persistence-service,
+                    host = ${HOSTNAME}
+                </pattern>
+                <structuredMetadataPattern>
+                    level = %level,
+                    thread = %thread,
+                    class = %logger,
+                    traceID = %mdc{traceId:-none},
+                    spanID = %mdc{spanId:-none}
+                </structuredMetadataPattern>
+            </label>
+            <message>
+                <pattern>${PATTERN}</pattern>
+            </message>
+        </format>
+        <verbose>false</verbose>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="LOKI" />
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>

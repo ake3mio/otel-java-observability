@@ -1,0 +1,28 @@
+declare "loki_collect" {
+    loki.source.api "loki_push_api" {
+        http {
+            listen_address = "0.0.0.0"
+            listen_port = 9999
+        }
+        labels = {
+            forwarded = "true",
+        }
+        forward_to = [loki.relabel.drop_debug_trace.receiver]
+    }
+
+    loki.relabel "drop_debug_trace" {
+      rule {
+        source_labels = ["level"]
+        regex         = "debug|trace|DEBUG|TRACE"
+        action        = "drop"
+      }
+      forward_to = [loki.write.remote.receiver]
+    }
+
+    loki.write "remote" {
+        endpoint {
+            url = "http://loki:3100/loki/api/v1/push"
+        }
+    }
+}
+

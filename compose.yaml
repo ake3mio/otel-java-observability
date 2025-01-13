@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  activemq-artemis:
+    image: apache/activemq-artemis:latest
+    environment:
+      ANONYMOUS_LOGIN: true
+    ports:
+      - "61616:61616"
+      - "8161:8161"
+
+  influxdb:
+    image: influxdb:2.7
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=admin123
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=admin123
+      - DOCKER_INFLUXDB_INIT_ORG=foo
+      - DOCKER_INFLUXDB_INIT_BUCKET=foo
+      - DOCKER_INFLUXDB_INIT_RETENTION=7d
+
+  alloy:
+    image: grafana/alloy-dev:latest
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - --stability.level=experimental
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./docker/alloy:/etc/alloy
+    ports:
+      - "12345:12345"
+      - "9999:9999"
+      - "8888:8888"
+      - "4320:4320"
+
+  pyroscope:
+    image: grafana/pyroscope
+    ports:
+      - "4040:4040"
+
+  loki:
+    image: grafana/loki:3.0.0
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - --config.file=/etc/prometheus.yaml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+      - --enable-feature=native-histograms
+      - --enable-feature=auto-reload-config
+    volumes:
+      - ./docker/prometheus.yaml:/etc/prometheus.yaml
+    ports:
+      - "9090:9090"
+
+  tempo:
+    image: grafana/tempo:latest
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./docker/tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "3200:3200" # tempo
+      - "4317:4317" # otlp grpc
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    volumes:
+      - ./docker/grafana/dashboards:/etc/dashboards
+      - ./docker/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./docker/grafana/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    environment:
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_BASIC_ENABLED=false
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor metricsSummary traceToProfiles tracesEmbeddedFlameGraph
+      - GF_INSTALL_PLUGINS=https://storage.googleapis.com/integration-artifacts/grafana-lokiexplore-app/grafana-lokiexplore-app-latest.zip;grafana-lokiexplore-app,https://storage.googleapis.com/integration-artifacts/grafana-exploretraces-app/grafana-exploretraces-app-latest.zip;grafana-traces-app
+    ports:
+      - "3000:3000"

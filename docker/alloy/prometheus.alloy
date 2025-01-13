@@ -1,0 +1,24 @@
+declare "prometheus_collect" {
+    prometheus.remote_write "default" {
+      endpoint {
+        url = "http://prometheus:9090/api/v1/write"
+      }
+    }
+
+    prometheus.scrape "temperature_persistence_service" {
+      targets = [
+        {"__address__" = "host.docker.internal:8081", "service_name" = "temperature-persistence-service", "language" = "java"},
+      ]
+      forward_to = [prometheus.remote_write.default.receiver]
+      scrape_interval = "10s"
+    }
+
+    prometheus.scrape "temperature_poller_service" {
+      targets = [
+        {"__address__" = "host.docker.internal:8080", "service_name" = "temperature-poller-service", "language" = "java"},
+      ]
+      forward_to = [prometheus.remote_write.default.receiver]
+      scrape_interval = "10s"
+      honor_labels= true
+    }
+}

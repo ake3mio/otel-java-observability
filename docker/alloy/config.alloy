@@ -1,0 +1,26 @@
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+import.file "loki_module" {
+  filename = file.path_join(module_path, "loki.alloy")
+  poll_frequency = "10s"
+}
+import.file "prometheus_module" {
+  filename = file.path_join(module_path, "prometheus.alloy")
+  poll_frequency = "10s"
+}
+import.file "pyroscope_module" {
+  filename = file.path_join(module_path, "pyroscope.alloy")
+  poll_frequency = "10s"
+}
+import.file "otel_module" {
+  filename = file.path_join(module_path, "otel.alloy")
+  poll_frequency = "10s"
+}
+
+loki_module.loki_collect {}
+prometheus_module.prometheus_collect {}
+pyroscope_module.pyroscope_collect {}
+otel_module.otel_collect {}

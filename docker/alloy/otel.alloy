@@ -1,0 +1,37 @@
+declare "otel_collect" {
+    otelcol.receiver.otlp "default" {
+      grpc {
+        endpoint = "0.0.0.0:4320"
+      }
+    
+      output {
+        traces  = [otelcol.connector.servicegraph.default.input,otelcol.exporter.otlp.tempo.input]
+      }
+    }
+    
+    otelcol.connector.servicegraph "default" {
+      output {
+        metrics = [otelcol.exporter.prometheus.default.input]
+      }
+    }
+    
+    otelcol.exporter.prometheus "default" {
+      forward_to = [prometheus.remote_write.default.receiver]
+    }
+    
+     prometheus.remote_write "default" {
+        endpoint {
+          url = "http://prometheus:9090/api/v1/write"
+        }
+    }
+    
+    otelcol.exporter.otlp "tempo" {
+      client {
+         endpoint = "tempo:4317"
+         tls {
+             insecure             = true
+             insecure_skip_verify = true
+         }
+      }
+    }
+}
